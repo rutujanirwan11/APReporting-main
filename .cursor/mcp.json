@@ -1,0 +1,38 @@
+{
+  "mcpServers": {
+    "design-system": {
+      "command": "node",
+      "args": ["../product-spec-kit/design-system-mcp/server.js"]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest",
+        "--headless"
+      ],
+      "autoApprove": [
+        "browser_navigate",
+        "browser_snapshot",
+        "browser_screenshot",
+        "browser_click",
+        "browser_type",
+        "browser_fill",
+        "browser_select_option",
+        "browser_hover",
+        "browser_wait_for",
+        "browser_close",
+        "browser_tab_list",
+        "browser_tab_new",
+        "browser_tab_select",
+        "browser_tab_close",
+        "browser_resize",
+        "browser_scroll",
+        "browser_handle_dialog",
+        "browser_file_upload",
+        "browser_pdf_save",
+        "browser_evaluate"
+      ]
+    }
+  }
+}
