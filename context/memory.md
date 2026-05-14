@@ -13,6 +13,8 @@
 
 ## Decisions
 
+- **Git `origin`:** This folder (`APReporting-main`) is the canonical git repo for day-to-day work. Remote: `https://github.com/rutujanirwan11/APReporting-main.git`. Use branches, commits, and PRs here by default—not `product-spec-kit`—unless a task explicitly targets the shared kit.
+
 <!-- Key decisions you've made that the AI should remember. Examples: -->
 <!-- - We decided to use tab navigation instead of a sidebar for the audit tool -->
 <!-- - Engineering prefers we hand off prototypes with PLACEMENT.md, not PRs -->
