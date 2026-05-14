@@ -26,6 +26,10 @@ This workspace is one of three sibling repos that form the Product OS:
 
 All three must be added to the same Cursor multi-root workspace. Skills from `product-spec-kit` are discovered automatically by Cursor.
 
+## Git (`origin`)
+
+**Treat this workspace as the git root for pushes and PRs.** The `origin` remote points at this repo on GitHub (`APReporting-main` under the PM’s account). Sibling folders (`prototype-sandbox`, `product-spec-kit`) are references—do not assume they are the push target unless the task says otherwise.
+
 ## Where Prototypes Live
 
 **Prototypes are always built in this workspace** at `./prototypes/<feature-name>/`. The sandbox (`../prototype-sandbox/`) is the design system -- you read components and patterns from it, but never write files there. Each prototype lives on the PM's epic branch and gets committed/pushed from here.
