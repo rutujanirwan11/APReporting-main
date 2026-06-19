@@ -19,7 +19,7 @@
 | --- | --- |
 | Epic assignee / product (Reports) | Rutuja Nirwan |
 | AP Reporting engineering | *Confirm squad assignee / EM in Jira* |
-| Report analysts (domain) | Kolby Henry, Jessica Miller |
+| Report analysts (domain) | Rutuja Nirwan, Jessica Miller |
 | Child-story owners | Jessica Miller ([DEV-86731](https://entrata.atlassian.net/browse/DEV-86731)), Rutuja Nirwan ([DEV-280618](https://entrata.atlassian.net/browse/DEV-280618)) |
 
 **Funnel entry date:** *Confirm from Jira epic `created`*  
