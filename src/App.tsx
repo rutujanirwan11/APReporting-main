@@ -64,7 +64,7 @@ export default function App() {
   }, [])
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Routes>
         <Route path="prototypes/:name" element={<PrototypeView prototypes={prototypes} />} />
         <Route element={<AppLayout name={me.name} prototypeCount={prototypes.length} branch={git.branch} dirty={git.dirty} syncStatus={syncStatus} />}>

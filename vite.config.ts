@@ -226,6 +226,7 @@ function sandboxResolverPlugin(): PluginOption {
 }
 
 export default defineConfig({
+  base: process.env.GITHUB_ACTIONS ? '/APReporting-main/' : '/',
   plugins: [react(), tailwindcss(), sandboxResolverPlugin(), workspaceApiPlugin()],
   resolve: {
     alias: {
