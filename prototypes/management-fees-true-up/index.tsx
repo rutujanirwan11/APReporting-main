@@ -29,9 +29,11 @@ export default function ManagementFeesTrueUp() {
   const [showResults, setShowResults] = useState(false)
   const [showToast, setShowToast] = useState(false)
   const [search, setSearch] = useState('')
+  const [feeSearch, setFeeSearch] = useState('')
   const [selectedProps, setSelectedProps] = useState(['48 West'])
 
   const filteredRows = useMemo(() => reportRows.filter(([name]) => name.toLowerCase().includes(search.toLowerCase())), [search])
+  const visibleFeeGroups = useMemo(() => ['All Management Fees', 'Enabled', 'Disabled'].filter((group) => group.toLowerCase().includes(feeSearch.toLowerCase())), [feeSearch])
   const notify = () => { setShowToast(true); window.setTimeout(() => setShowToast(false), 2600) }
   const toggleProperty = () => setSelectedProps(selectedProps.length ? [] : ['48 West'])
 
@@ -60,8 +62,8 @@ export default function ManagementFeesTrueUp() {
               <div><div className="field-label">True-up display <CircleHelp size={13} /></div><div className="info-choice"><Check size={14} /> BVA columns enabled</div><p className="helper">Original · Recalculated · Variance on fee-summary rows only.</p></div>
             </div>
             <div className="filter-divider properties-grid">
-              <div><div className="field-label">Property Groups <Lock size={13} /></div><div className="property-box"><div className="box-toolbar"><span>Selected Properties</span><button onClick={toggleProperty}><PlusCircle size={15} /> Add</button></div>{selectedProps.length ? selectedProps.map((prop) => <div className="property-row" key={prop}>{prop}<button onClick={toggleProperty}>×</button></div>) : <div className="empty-property">No properties selected</div>}<button className="clear-all" onClick={() => setSelectedProps([])}>Clear All</button></div></div>
-              <div><div className="field-label">Management Fees <Lock size={13} /></div><div className="tree-box"><div className="tree-search"><Search size={16} /><input placeholder="Search management fees" /></div><div className="tree-row selected"><ChevronDown size={13} /> All Management Fees <Check size={16} /></div><div className="tree-row"><ChevronRight size={13} /> Enabled <Check size={16} /></div><div className="tree-row"><ChevronRight size={13} /> Disabled <Check size={16} /></div></div></div>
+              <div><div className="field-label">Property Groups <Lock size={13} /></div><div className="property-box"><div className="box-toolbar"><span>Selected Properties</span><button onClick={toggleProperty}><PlusCircle size={15} /> Add</button></div>{selectedProps.length ? selectedProps.map((prop) => <div className="property-row" key={prop}>{prop}<button onClick={toggleProperty} aria-label={`Remove ${prop}`}>×</button></div>) : <div className="empty-property">No properties selected</div>}<button className="clear-all" onClick={() => setSelectedProps([])}>Clear All</button></div></div>
+              <div><div className="field-label">Management Fees <Lock size={13} /></div><div className="tree-box"><div className="tree-search"><Search size={16} /><input value={feeSearch} onChange={(e) => setFeeSearch(e.target.value)} placeholder="Search management fees" aria-label="Search management fees" /></div>{visibleFeeGroups.map((group, index) => <div className={`tree-row ${index === 0 && !feeSearch ? 'selected' : ''}`} key={group}>{index === 0 && !feeSearch ? <ChevronDown size={13} /> : <ChevronRight size={13} />} {group} <Check size={16} /></div>)}{!visibleFeeGroups.length && <div className="empty-property">No matching management fees</div>}</div></div>
             </div>
             <div className="filter-divider bottom-fields">
               <div><div className="field-label">Chart of Accounts or Mask <Lock size={13} /></div><select><option>Master GL Tree</option><option>AP Chart of Accounts</option></select></div>
