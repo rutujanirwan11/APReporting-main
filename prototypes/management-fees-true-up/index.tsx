@@ -8,6 +8,7 @@ import './styles.css'
 
 type Period = 'Jan 2026' | 'Feb 2026' | 'Mar 2026'
 const periods: Period[] = ['Jan 2026', 'Feb 2026', 'Mar 2026']
+const propertyOptions = ['48 West', '69 Seward', 'Cleveland Apartments II']
 const money = (v: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v)
 
 const reportRows = [
@@ -20,6 +21,9 @@ const reportRows = [
 export default function ManagementFeesTrueUp() {
   const [version, setVersion] = useState('3.0')
   const [periodMode, setPeriodMode] = useState('Custom Post Month Range')
+  const [summarizeBy, setSummarizeBy] = useState('Do Not Summarize')
+  const [consolidateBy, setConsolidateBy] = useState('Do Not Consolidate')
+  const [chartOfAccounts, setChartOfAccounts] = useState('Master GL Tree')
   const [startMonth, setStartMonth] = useState('01')
   const [startYear, setStartYear] = useState('2026')
   const [endMonth, setEndMonth] = useState('03')
@@ -31,11 +35,24 @@ export default function ManagementFeesTrueUp() {
   const [search, setSearch] = useState('')
   const [feeSearch, setFeeSearch] = useState('')
   const [selectedProps, setSelectedProps] = useState(['48 West'])
+  const [selectedFeeGroups, setSelectedFeeGroups] = useState(['All Management Fees'])
+  const [showPropertyMenu, setShowPropertyMenu] = useState(false)
 
   const filteredRows = useMemo(() => reportRows.filter(([name]) => name.toLowerCase().includes(search.toLowerCase())), [search])
   const visibleFeeGroups = useMemo(() => ['All Management Fees', 'Enabled', 'Disabled'].filter((group) => group.toLowerCase().includes(feeSearch.toLowerCase())), [feeSearch])
+  const selectedPeriods = useMemo(() => {
+    if (periodMode === 'Current Post Month') return ['Mar 2026'] as Period[]
+    if (periodMode === 'Quarterly') return periods
+    const start = Number(startMonth)
+    const end = Number(endMonth)
+    return periods.filter((period) => {
+      const month = periods.indexOf(period) + 1
+      return month >= start && month <= end
+    })
+  }, [periodMode, startMonth, endMonth])
   const notify = () => { setShowToast(true); window.setTimeout(() => setShowToast(false), 2600) }
-  const toggleProperty = () => setSelectedProps(selectedProps.length ? [] : ['48 West'])
+  const toggleProperty = (property: string) => setSelectedProps((current) => current.includes(property) ? current.filter((item) => item !== property) : [...current, property])
+  const toggleFeeGroup = (group: string) => setSelectedFeeGroups((current) => current.includes(group) ? current.filter((item) => item !== group) : [...current, group])
 
   return <div className="filter-prototype">
     <header className="legacy-topbar">
@@ -54,25 +71,25 @@ export default function ManagementFeesTrueUp() {
             <div className="panel-heading"><div><div className="panel-kicker">Management Fees report</div><h1>Report Filters</h1><p>Choose the version, properties, and reporting period.</p></div><span className="version-badge">{showResults ? 'Report generated' : 'Draft run'}</span></div>
             <div className="panel-section compact-section"><label>Version</label><select value={version} onChange={(e) => setVersion(e.target.value)}><option>3.0</option><option>2.9</option></select></div>
             <div className="filter-two-column">
-              <div className="field-block"><label>Summarize By</label><select><option>Do Not Summarize</option><option>Property</option><option>Management Fee</option></select></div>
-              <div className="field-block"><label>Consolidate By</label><select><option>Do Not Consolidate</option><option>Property Group</option><option>Portfolio</option></select></div>
+              <div className="field-block"><label>Summarize By</label><select value={summarizeBy} onChange={(e) => setSummarizeBy(e.target.value)}><option>Do Not Summarize</option><option>Property</option><option>Management Fee</option></select></div>
+              <div className="field-block"><label>Consolidate By</label><select value={consolidateBy} onChange={(e) => setConsolidateBy(e.target.value)}><option>Do Not Consolidate</option><option>Property Group</option><option>Portfolio</option></select></div>
             </div>
             <div className="filter-two-column filter-divider">
               <div><div className="field-label">Enable Drill-ins <CircleHelp size={13} /></div><button className={`toggle ${drillIns ? 'on' : ''}`} onClick={() => setDrillIns(!drillIns)}><span>{drillIns ? 'Yes' : 'No'}</span><i /></button><p className="helper">Amount drill-in remains available. Variance drill-in is coming in the next sprint.</p></div>
               <div><div className="field-label">True-up display <CircleHelp size={13} /></div><div className="info-choice"><Check size={14} /> BVA columns enabled</div><p className="helper">Original · Recalculated · Variance on fee-summary rows only.</p></div>
             </div>
             <div className="filter-divider properties-grid">
-              <div><div className="field-label">Property Groups <Lock size={13} /></div><div className="property-box"><div className="box-toolbar"><span>Selected Properties</span><button onClick={toggleProperty}><PlusCircle size={15} /> Add</button></div>{selectedProps.length ? selectedProps.map((prop) => <div className="property-row" key={prop}>{prop}<button onClick={toggleProperty} aria-label={`Remove ${prop}`}>×</button></div>) : <div className="empty-property">No properties selected</div>}<button className="clear-all" onClick={() => setSelectedProps([])}>Clear All</button></div></div>
-              <div><div className="field-label">Management Fees <Lock size={13} /></div><div className="tree-box"><div className="tree-search"><Search size={16} /><input value={feeSearch} onChange={(e) => setFeeSearch(e.target.value)} placeholder="Search management fees" aria-label="Search management fees" /></div>{visibleFeeGroups.map((group, index) => <div className={`tree-row ${index === 0 && !feeSearch ? 'selected' : ''}`} key={group}>{index === 0 && !feeSearch ? <ChevronDown size={13} /> : <ChevronRight size={13} />} {group} <Check size={16} /></div>)}{!visibleFeeGroups.length && <div className="empty-property">No matching management fees</div>}</div></div>
+              <div><div className="field-label">Property Groups <Lock size={13} /></div><div className="property-box"><div className="box-toolbar"><span>Selected Properties</span><button onClick={() => setShowPropertyMenu((open) => !open)}><PlusCircle size={15} /> Add</button></div>{selectedProps.length ? selectedProps.map((prop) => <div className="property-row" key={prop}>{prop}<button onClick={() => toggleProperty(prop)} aria-label={`Remove ${prop}`}>×</button></div>) : <div className="empty-property">No properties selected</div>}<button className="clear-all" onClick={() => setSelectedProps([])}>Clear All</button>{showPropertyMenu && <div className="property-add-menu">{propertyOptions.map((property) => <button key={property} className={selectedProps.includes(property) ? 'chosen' : ''} onClick={() => toggleProperty(property)}>{property}<Check size={14} /></button>)}</div>}</div></div>
+              <div><div className="field-label">Management Fees <Lock size={13} /></div><div className="tree-box"><div className="tree-search"><Search size={16} /><input value={feeSearch} onChange={(e) => setFeeSearch(e.target.value)} placeholder="Search management fees" aria-label="Search management fees" /></div>{visibleFeeGroups.map((group, index) => <button className={`tree-row ${selectedFeeGroups.includes(group) ? 'selected' : ''}`} key={group} onClick={() => toggleFeeGroup(group)} aria-pressed={selectedFeeGroups.includes(group)}>{index === 0 && !feeSearch ? <ChevronDown size={13} /> : <ChevronRight size={13} />} {group} <Check size={16} /></button>)}{!visibleFeeGroups.length && <div className="empty-property">No matching management fees</div>}</div></div>
             </div>
             <div className="filter-divider bottom-fields">
-              <div><div className="field-label">Chart of Accounts or Mask <Lock size={13} /></div><select><option>Master GL Tree</option><option>AP Chart of Accounts</option></select></div>
+              <div><div className="field-label">Chart of Accounts or Mask <Lock size={13} /></div><select value={chartOfAccounts} onChange={(e) => setChartOfAccounts(e.target.value)}><option>Master GL Tree</option><option>AP Chart of Accounts</option></select></div>
               <div><div className="field-label">Period <Lock size={13} /></div><select value={periodMode} onChange={(e) => setPeriodMode(e.target.value)}><option>Custom Post Month Range</option><option>Current Post Month</option><option>Quarterly</option></select><div className="date-row"><input value={startMonth} onChange={(e) => setStartMonth(e.target.value)} aria-label="start month" /><span>/</span><input value={startYear} onChange={(e) => setStartYear(e.target.value)} aria-label="start year" /><span className="date-arrow">→</span><input value={endMonth} onChange={(e) => setEndMonth(e.target.value)} aria-label="end month" /><span>/</span><input value={endYear} onChange={(e) => setEndYear(e.target.value)} aria-label="end year" /><CalendarDays size={16} /></div><div className="period-note">Max 12 post months · latest completed true-up per period.</div></div>
             </div>
             <div className="new-requirements"><div className="new-label">NEW</div><div><strong>Template-aware BVA labels</strong><span>{basis === 'Cash Receipts' ? 'Cash Receipts · Adjusted Cash Receipts · Percent of Cash Receipts' : 'Revenue · Adjusted Revenue · Percent of Revenue'}</span></div><div className="basis-switch"><button className={basis === 'Cash Receipts' ? 'selected' : ''} onClick={() => setBasis('Cash Receipts')}>Cash</button><button className={basis === 'Revenue' ? 'selected' : ''} onClick={() => setBasis('Revenue')}>Revenue</button></div></div>
-            <div className="panel-actions"><button className="generate-button" onClick={() => { setShowResults(true); notify() }}>Generate Report <ChevronDown size={16} /></button><button className="reset-button" onClick={() => { setVersion('3.0'); setPeriodMode('Custom Post Month Range'); setSelectedProps(['48 West']); setShowResults(false) }}><RotateCcw size={14} /> Reset</button></div>
+            <div className="panel-actions"><button className="generate-button" onClick={() => { setShowResults(true); notify() }}>Generate Report <ChevronDown size={16} /></button><button className="reset-button" onClick={() => { setVersion('3.0'); setPeriodMode('Custom Post Month Range'); setSummarizeBy('Do Not Summarize'); setConsolidateBy('Do Not Consolidate'); setChartOfAccounts('Master GL Tree'); setSelectedProps(['48 West']); setSelectedFeeGroups(['All Management Fees']); setStartMonth('01'); setStartYear('2026'); setEndMonth('03'); setEndYear('2026'); setShowResults(false) }}><RotateCcw size={14} /> Reset</button></div>
           </section>
-          <ReportPreview showResults={showResults} search={search} setSearch={setSearch} filteredRows={filteredRows} periods={periods} basis={basis} />
+          <ReportPreview showResults={showResults} search={search} setSearch={setSearch} filteredRows={filteredRows} periods={selectedPeriods} basis={basis} />
         </div>
       </main>
     </div>
