@@ -37,7 +37,9 @@ const assets = ${JSON.stringify(assets)}
 export default {
   async fetch(request) {
     const { pathname } = new URL(request.url)
-    const asset = assets[pathname.replace(/^\\/+/, '')]
+    const assetPath = pathname.replace(/^\\/+/, '')
+    const assetName = assetPath.split('/').pop()
+    const asset = assets[assetPath] ?? assets['assets/' + assetName]
     if (request.method === 'GET' && asset) {
       const bytes = Uint8Array.from(atob(asset.body), (character) => character.charCodeAt(0))
       return new Response(bytes, { headers: { 'content-type': asset.type, 'cache-control': 'public, max-age=31536000, immutable' } })
