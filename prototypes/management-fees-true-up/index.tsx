@@ -6,9 +6,15 @@ import {
 } from 'lucide-react'
 import './styles.css'
 
-type Period = 'Jan 2026' | 'Feb 2026' | 'Mar 2026' | 'Jul 2026'
+type Period = string
 type ReportRow = [string, number, Record<string, [number, number, number]> | null]
-const periodCatalog: Array<{ label: Period; month: number }> = [{ label: 'Jan 2026', month: 1 }, { label: 'Feb 2026', month: 2 }, { label: 'Mar 2026', month: 3 }, { label: 'Jul 2026', month: 7 }]
+const currentDate = new Date()
+const currentMonth = String(currentDate.getMonth() + 1).padStart(2, '0')
+const currentYear = String(currentDate.getFullYear())
+const priorDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)
+const priorMonth = String(priorDate.getMonth() + 1).padStart(2, '0')
+const priorYear = String(priorDate.getFullYear())
+const periodCatalog: Array<{ label: Period; month: number }> = [{ label: 'Jan 2026', month: 1 }, { label: 'Feb 2026', month: 2 }, { label: 'Mar 2026', month: 3 }, { label: 'Jul 2026', month: 7 }, { label: 'Aug 2026', month: 8 }]
 const periods: Period[] = periodCatalog.map(({ label }) => label)
 const propertyOptions = ['48 West', '69 Seward', 'Cleveland Apartments II', 'TENN, TENN - Commercial', 'TENN - Commercial, NEW TENN - 3rd PARTY', 'TENN, NEW TENN - 3rd PARTY']
 const money = (v: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v)
@@ -37,14 +43,14 @@ const attachedReportRows: Record<string, ReportRow[]> = {
 
 export default function ManagementFeesTrueUp() {
   const [version, setVersion] = useState('3.0')
-  const [periodMode, setPeriodMode] = useState('Custom Post Month')
+  const [periodMode, setPeriodMode] = useState('Current Post Month')
   const [summarizeBy, setSummarizeBy] = useState('Do Not Summarize')
   const [consolidateBy, setConsolidateBy] = useState('Do Not Consolidate')
   const [chartOfAccounts, setChartOfAccounts] = useState('Master GL Tree')
-  const [startMonth, setStartMonth] = useState('01')
-  const [startYear, setStartYear] = useState('2026')
-  const [endMonth, setEndMonth] = useState('03')
-  const [endYear, setEndYear] = useState('2026')
+  const [startMonth, setStartMonth] = useState(currentMonth)
+  const [startYear, setStartYear] = useState(currentYear)
+  const [endMonth, setEndMonth] = useState(currentMonth)
+  const [endYear, setEndYear] = useState(currentYear)
   const [basis, setBasis] = useState<'Cash Receipts' | 'Revenue'>('Cash Receipts')
   const [drillIns, setDrillIns] = useState(true)
   const [showResults, setShowResults] = useState(false)
@@ -72,6 +78,15 @@ export default function ManagementFeesTrueUp() {
     }).map(({ label }) => label)
   }, [periodMode, startMonth, endMonth])
   const notify = () => { setShowToast(true); window.setTimeout(() => setShowToast(false), 2600) }
+  const handlePeriodModeChange = (mode: string) => {
+    setPeriodMode(mode)
+    if (mode === 'Current Post Month') {
+      setStartMonth(currentMonth); setStartYear(currentYear); setEndMonth(currentMonth); setEndYear(currentYear)
+    }
+    if (mode === 'Prior Post Month') {
+      setStartMonth(priorMonth); setStartYear(priorYear); setEndMonth(priorMonth); setEndYear(priorYear)
+    }
+  }
   const toggleProperty = (property: string) => setSelectedProps((current) => current.includes(property) ? current.filter((item) => item !== property) : [...current, property])
   const toggleFeeGroup = (group: string) => setSelectedFeeGroups((current) => current.includes(group) ? current.filter((item) => item !== group) : [...current, group])
 
@@ -105,10 +120,10 @@ export default function ManagementFeesTrueUp() {
             </div>
             <div className="filter-divider bottom-fields">
               <div><div className="field-label">Chart of Accounts or Mask <Lock size={13} /></div><select value={chartOfAccounts} onChange={(e) => setChartOfAccounts(e.target.value)}><option>Master GL Tree</option><option>AP Chart of Accounts</option></select></div>
-              <div><div className="field-label">Period <Lock size={13} /></div><select value={periodMode} onChange={(e) => setPeriodMode(e.target.value)}><option>Current Post Month</option><option>Prior Post Month</option><option>Custom Post Month</option><option>Custom Post Month Range</option></select>{periodMode === 'Custom Post Month Range' ? <div className="date-row"><input value={startMonth} onChange={(e) => setStartMonth(e.target.value)} aria-label="start month" /><span>/</span><input value={startYear} onChange={(e) => setStartYear(e.target.value)} aria-label="start year" /><span className="date-arrow">→</span><input value={endMonth} onChange={(e) => setEndMonth(e.target.value)} aria-label="end month" /><span>/</span><input value={endYear} onChange={(e) => setEndYear(e.target.value)} aria-label="end year" /><CalendarDays size={16} /></div> : <div className="date-row single-date"><input value={startMonth} onChange={(e) => setStartMonth(e.target.value)} aria-label="post month" /><span>/</span><input value={startYear} onChange={(e) => setStartYear(e.target.value)} aria-label="post year" /><CalendarDays size={16} /></div>}<div className="period-note">{periodMode === 'Custom Post Month Range' ? 'Max 12 post months · latest completed true-up per period.' : 'One post month · latest completed true-up for the selected period.'}</div></div>
+              <div><div className="field-label">Period <Lock size={13} /></div><select value={periodMode} onChange={(e) => handlePeriodModeChange(e.target.value)}><option>Current Post Month</option><option>Prior Post Month</option><option>Custom Post Month</option><option>Custom Post Month Range</option></select>{periodMode === 'Custom Post Month Range' ? <div className="date-row"><input value={startMonth} onChange={(e) => setStartMonth(e.target.value)} aria-label="start month" /><span>/</span><input value={startYear} onChange={(e) => setStartYear(e.target.value)} aria-label="start year" /><span className="date-arrow">→</span><input value={endMonth} onChange={(e) => setEndMonth(e.target.value)} aria-label="end month" /><span>/</span><input value={endYear} onChange={(e) => setEndYear(e.target.value)} aria-label="end year" /><CalendarDays size={16} /></div> : <div className="date-row single-date"><input value={startMonth} onChange={(e) => setStartMonth(e.target.value)} aria-label="post month" /><span>/</span><input value={startYear} onChange={(e) => setStartYear(e.target.value)} aria-label="post year" /><CalendarDays size={16} /></div>}<div className="period-note">{periodMode === 'Custom Post Month Range' ? 'Max 12 post months · latest completed true-up per period.' : 'One post month · latest completed true-up for the selected period.'}</div></div>
             </div>
             <div className="new-requirements"><div className="new-label">NEW</div><div><strong>Template-aware BVA labels</strong><span>{basis === 'Cash Receipts' ? 'Cash Receipts · Adjusted Cash Receipts · Percent of Cash Receipts' : 'Revenue · Adjusted Revenue · Percent of Revenue'}</span></div><div className="basis-switch"><button className={basis === 'Cash Receipts' ? 'selected' : ''} onClick={() => setBasis('Cash Receipts')}>Cash</button><button className={basis === 'Revenue' ? 'selected' : ''} onClick={() => setBasis('Revenue')}>Revenue</button></div></div>
-            <div className="panel-actions"><button className="generate-button" onClick={() => { setShowResults(true); notify() }}>Generate Report <ChevronDown size={16} /></button><button className="reset-button" onClick={() => { setVersion('3.0'); setPeriodMode('Custom Post Month'); setSummarizeBy('Do Not Summarize'); setConsolidateBy('Do Not Consolidate'); setChartOfAccounts('Master GL Tree'); setSelectedProps(['48 West']); setSelectedFeeGroups(['All Management Fees']); setStartMonth('07'); setStartYear('2026'); setEndMonth('07'); setEndYear('2026'); setShowResults(false) }}><RotateCcw size={14} /> Reset</button></div>
+            <div className="panel-actions"><button className="generate-button" onClick={() => { setShowResults(true); notify() }}>Generate Report <ChevronDown size={16} /></button><button className="reset-button" onClick={() => { setVersion('3.0'); handlePeriodModeChange('Current Post Month'); setSummarizeBy('Do Not Summarize'); setConsolidateBy('Do Not Consolidate'); setChartOfAccounts('Master GL Tree'); setSelectedProps(['48 West']); setSelectedFeeGroups(['All Management Fees']); setShowResults(false) }}><RotateCcw size={14} /> Reset</button></div>
           </section>
           <ReportPreview showResults={showResults} search={search} setSearch={setSearch} filteredRows={filteredRows} periods={selectedPeriods} basis={activeImportedProperty ? 'Revenue' : basis} properties={selectedProps} />
         </div>
