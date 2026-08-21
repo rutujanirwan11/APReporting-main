@@ -238,6 +238,13 @@ export default defineConfig({
   optimizeDeps: {
     entries: ['src/main.tsx'],
   },
+  build: {
+    rollupOptions: {
+      output: {
+        inlineDynamicImports: true,
+      },
+    },
+  },
   server: {
     port: 5174,
     fs: {
