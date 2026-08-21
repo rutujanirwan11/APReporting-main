@@ -20,7 +20,7 @@ const worker = `const html = ${JSON.stringify(html)}
 export default {
   async fetch(request) {
     const { pathname } = new URL(request.url)
-    if (request.method === 'GET' && (pathname === '/' || pathname === '/index.html')) {
+    if (request.method === 'GET' && !pathname.startsWith('/api/')) {
       return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8' } })
     }
     return new Response('Not found', { status: 404 })
