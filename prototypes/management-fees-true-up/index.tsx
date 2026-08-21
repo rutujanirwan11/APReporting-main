@@ -6,17 +6,34 @@ import {
 } from 'lucide-react'
 import './styles.css'
 
-type Period = 'Jan 2026' | 'Feb 2026' | 'Mar 2026'
-const periods: Period[] = ['Jan 2026', 'Feb 2026', 'Mar 2026']
-const propertyOptions = ['48 West', '69 Seward', 'Cleveland Apartments II']
+type Period = 'Jan 2026' | 'Feb 2026' | 'Mar 2026' | 'Jul 2026'
+type ReportRow = [string, number, Record<string, [number, number, number]> | null]
+const periodCatalog: Array<{ label: Period; month: number }> = [{ label: 'Jan 2026', month: 1 }, { label: 'Feb 2026', month: 2 }, { label: 'Mar 2026', month: 3 }, { label: 'Jul 2026', month: 7 }]
+const periods: Period[] = periodCatalog.map(({ label }) => label)
+const propertyOptions = ['48 West', '69 Seward', 'Cleveland Apartments II', 'TENN, TENN - Commercial', 'TENN - Commercial, NEW TENN - 3rd PARTY', 'TENN, NEW TENN - 3rd PARTY']
 const money = (v: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v)
 
-const reportRows = [
+const reportRows: ReportRow[] = [
   ['Total Cash Receipts', 669427.80, null], ['Prepayment Refunds', -888, null],
   ['Adjusted Cash Receipts', 639444.24, null], ['Management Fee Due', 19183.33, { 'Jan 2026': [19183.33, 19752.47, 569.14], 'Feb 2026': [19309.93, 19309.93, 0], 'Mar 2026': [19722.56, 19722.56, 0] }],
   ['Management Fee True-up', 0, { 'Jan 2026': [0, 569.14, 569.14], 'Feb 2026': [0, 0, 0], 'Mar 2026': [0, 0, 0] }],
   ['Prepaid Rent', -15343.56, null], ['Total Amount Due', 19752.47, { 'Jan 2026': [19183.33, 19752.47, 569.14], 'Feb 2026': [19309.93, 19309.93, 0], 'Mar 2026': [19722.56, 19722.56, 0] }],
-] as const
+] as ReportRow[]
+
+const attachedReportRows: Record<string, ReportRow[]> = {
+  'TENN, TENN - Commercial': [
+    ['Adjusted Revenue', 1099513.35, null], ['Revenue', 1099513.35, null], ['Total Revenue', 1099513.35, null],
+    ['Management Fee Due', 32985.40, { 'Jul 2026': [32985.40, 32985.40, 0] }], ['Total Amount Due', 32985.40, { 'Jul 2026': [32985.40, 32985.40, 0] }],
+  ],
+  'TENN - Commercial, NEW TENN - 3rd PARTY': [
+    ['Adjusted Revenue', 40463.13, null], ['Revenue', 40463.13, null], ['Commercial Income', 36368.75, null],
+    ['Management Fee Due', 1213.89, { 'Jul 2026': [1213.89, 1213.89, 0] }], ['Total Amount Due', 1213.89, { 'Jul 2026': [1213.89, 1213.89, 0] }],
+  ],
+  'TENN, NEW TENN - 3rd PARTY': [
+    ['Adjusted Revenue', 1059050.22, null], ['Revenue', 1059050.22, null], ['Potential Income', 796964.45, null],
+    ['Management Fee Due', 31771.51, { 'Jul 2026': [31771.51, 31771.51, 0] }], ['Total Amount Due', 31771.51, { 'Jul 2026': [31771.51, 31771.51, 0] }],
+  ],
+}
 
 export default function ManagementFeesTrueUp() {
   const [version, setVersion] = useState('3.0')
@@ -38,18 +55,19 @@ export default function ManagementFeesTrueUp() {
   const [selectedFeeGroups, setSelectedFeeGroups] = useState(['All Management Fees'])
   const [showPropertyMenu, setShowPropertyMenu] = useState(false)
 
-  const filteredRows = useMemo(() => reportRows.filter(([name]) => name.toLowerCase().includes(search.toLowerCase())), [search])
+  const activeImportedProperty = selectedProps.find((property) => attachedReportRows[property])
+  const activeRows = activeImportedProperty ? attachedReportRows[activeImportedProperty] : reportRows
+  const filteredRows = useMemo(() => activeRows.filter(([name]) => name.toLowerCase().includes(search.toLowerCase())), [activeRows, search])
   const visibleFeeGroups = useMemo(() => ['All Management Fees', 'Enabled', 'Disabled'].filter((group) => group.toLowerCase().includes(feeSearch.toLowerCase())), [feeSearch])
   const selectedPeriods = useMemo(() => {
-    if (periodMode === 'Current Post Month') return ['Mar 2026'] as Period[]
-    if (periodMode === 'Quarterly') return periods
+    if (periodMode === 'Current Post Month') return [endMonth === '07' ? 'Jul 2026' : 'Mar 2026'] as Period[]
+    if (periodMode === 'Quarterly') return activeImportedProperty ? ['Jul 2026'] as Period[] : periods.slice(0, 3)
     const start = Number(startMonth)
     const end = Number(endMonth)
-    return periods.filter((period) => {
-      const month = periods.indexOf(period) + 1
+    return periodCatalog.filter(({ month }) => {
       return month >= start && month <= end
-    })
-  }, [periodMode, startMonth, endMonth])
+    }).map(({ label }) => label)
+  }, [activeImportedProperty, periodMode, startMonth, endMonth])
   const notify = () => { setShowToast(true); window.setTimeout(() => setShowToast(false), 2600) }
   const toggleProperty = (property: string) => setSelectedProps((current) => current.includes(property) ? current.filter((item) => item !== property) : [...current, property])
   const toggleFeeGroup = (group: string) => setSelectedFeeGroups((current) => current.includes(group) ? current.filter((item) => item !== group) : [...current, group])
@@ -89,7 +107,7 @@ export default function ManagementFeesTrueUp() {
             <div className="new-requirements"><div className="new-label">NEW</div><div><strong>Template-aware BVA labels</strong><span>{basis === 'Cash Receipts' ? 'Cash Receipts · Adjusted Cash Receipts · Percent of Cash Receipts' : 'Revenue · Adjusted Revenue · Percent of Revenue'}</span></div><div className="basis-switch"><button className={basis === 'Cash Receipts' ? 'selected' : ''} onClick={() => setBasis('Cash Receipts')}>Cash</button><button className={basis === 'Revenue' ? 'selected' : ''} onClick={() => setBasis('Revenue')}>Revenue</button></div></div>
             <div className="panel-actions"><button className="generate-button" onClick={() => { setShowResults(true); notify() }}>Generate Report <ChevronDown size={16} /></button><button className="reset-button" onClick={() => { setVersion('3.0'); setPeriodMode('Custom Post Month Range'); setSummarizeBy('Do Not Summarize'); setConsolidateBy('Do Not Consolidate'); setChartOfAccounts('Master GL Tree'); setSelectedProps(['48 West']); setSelectedFeeGroups(['All Management Fees']); setStartMonth('01'); setStartYear('2026'); setEndMonth('03'); setEndYear('2026'); setShowResults(false) }}><RotateCcw size={14} /> Reset</button></div>
           </section>
-          <ReportPreview showResults={showResults} search={search} setSearch={setSearch} filteredRows={filteredRows} periods={selectedPeriods} basis={basis} />
+          <ReportPreview showResults={showResults} search={search} setSearch={setSearch} filteredRows={filteredRows} periods={selectedPeriods} basis={activeImportedProperty ? 'Revenue' : basis} properties={selectedProps} />
         </div>
       </main>
     </div>
@@ -97,6 +115,7 @@ export default function ManagementFeesTrueUp() {
   </div>
 }
 
-function ReportPreview({ showResults, search, setSearch, filteredRows, periods, basis }: { showResults: boolean; search: string; setSearch: (v: string) => void; filteredRows: typeof reportRows; periods: Period[]; basis: string }) {
-  return <section className={`preview-card ${showResults ? 'results-open' : ''}`}><div className="preview-toolbar"><div><span className="preview-kicker">{showResults ? 'Generated report' : 'Existing report preview'}</span><h2>Management Fees — 48 West</h2><p>{basis === 'Cash Receipts' ? 'Cash Receipts' : 'Revenue'} basis · Jan 2026 – Mar 2026</p></div><div className="preview-actions"><div className="mini-search"><Search size={14} /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search" /></div><button onClick={() => window.print()}><Printer size={15} /></button><button><FileSpreadsheet size={15} /></button></div></div><div className="preview-note"><span>ⓘ</span>{showResults ? 'Showing latest completed true-up per property, template, and post month.' : 'Generate the report to view the new BVA columns alongside the existing Amount column.'}</div><div className="preview-table-wrap"><table><thead><tr><th rowSpan={2}>Description</th><th rowSpan={2}>Amount</th>{periods.map((p) => <th colSpan={3} key={p} className="period-group">{p}<small>POST MONTH</small></th>)}</tr><tr>{periods.flatMap((p) => [<th key={`${p}-o`}>Original<br />Fee</th>, <th key={`${p}-r`}>Recalculated<br />Fee</th>, <th key={`${p}-v`}>Variance</th>])}</tr></thead><tbody>{filteredRows.map(([name, amount, bva]) => <tr className={name.includes('Management Fee') ? 'summary-line' : ''} key={name}><td>{name}</td><td className={amount < 0 ? 'negative' : ''}>{amount === 0 ? '—' : money(amount)}</td>{periods.flatMap((p) => { const vals = bva?.[p as keyof typeof bva]; return vals ? vals.map((v, i) => <td className={`bva-value ${i === 2 ? 'variance' : ''} ${!showResults ? 'blurred-value' : ''}`} key={`${name}-${p}-${i}`}>{money(v)}</td>) : [<td className="dash" key={`${name}-${p}-1`}>—</td>, <td className="dash" key={`${name}-${p}-2`}>—</td>, <td className="dash" key={`${name}-${p}-3`}>—</td>] })}</tr>)}</tbody></table></div><div className="preview-footer"><span>Existing behavior preserved for basis/detail rows</span><span><Check size={14} /> fee_type_id = 3 reconciliation</span></div></section>
+function ReportPreview({ showResults, search, setSearch, filteredRows, periods, basis, properties }: { showResults: boolean; search: string; setSearch: (v: string) => void; filteredRows: ReportRow[]; periods: Period[]; basis: string; properties: string[] }) {
+  const periodLabel = periods.length ? periods.join(' – ') : 'Select a reporting period'
+  return <section className={`preview-card ${showResults ? 'results-open' : ''}`}><div className="preview-toolbar"><div><span className="preview-kicker">{showResults ? 'Generated report' : 'Existing report preview'}</span><h2>Management Fees — {properties.length ? properties.join(', ') : 'No properties selected'}</h2><p>{basis === 'Cash Receipts' ? 'Cash Receipts' : 'Revenue'} basis · {periodLabel}</p></div><div className="preview-actions"><div className="mini-search"><Search size={14} /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search" /></div><button onClick={() => window.print()}><Printer size={15} /></button><button><FileSpreadsheet size={15} /></button></div></div><div className="preview-note"><span>ⓘ</span>{showResults ? 'Showing the selected property data and latest completed true-up per post month.' : 'Generate the report to view the selected filter combination and BVA columns.'}</div><div className="preview-table-wrap"><table><thead><tr><th rowSpan={2}>Description</th><th rowSpan={2}>Amount</th>{periods.map((p) => <th colSpan={3} key={p} className="period-group">{p}<small>POST MONTH</small></th>)}</tr><tr>{periods.flatMap((p) => [<th key={`${p}-o`}>Original<br />Fee</th>, <th key={`${p}-r`}>Recalculated<br />Fee</th>, <th key={`${p}-v`}>Variance</th>])}</tr></thead><tbody>{filteredRows.map(([name, amount, bva]) => <tr className={name.includes('Management Fee') ? 'summary-line' : ''} key={name}><td>{name}</td><td className={amount < 0 ? 'negative' : ''}>{amount === 0 ? '—' : money(amount)}</td>{periods.flatMap((p) => { const vals = bva?.[p]; return vals ? vals.map((v, i) => <td className={`bva-value ${i === 2 ? 'variance' : ''} ${!showResults ? 'blurred-value' : ''}`} key={`${name}-${p}-${i}`}>{money(v)}</td>) : [<td className="dash" key={`${name}-${p}-1`}>—</td>, <td className="dash" key={`${name}-${p}-2`}>—</td>, <td className="dash" key={`${name}-${p}-3`}>—</td>] })}</tr>)}</tbody></table></div><div className="preview-footer"><span>Existing behavior preserved for basis/detail rows</span><span><Check size={14} /> fee_type_id = 3 reconciliation</span></div></section>
 }
