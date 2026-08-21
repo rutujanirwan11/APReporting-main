@@ -37,7 +37,7 @@ const attachedReportRows: Record<string, ReportRow[]> = {
 
 export default function ManagementFeesTrueUp() {
   const [version, setVersion] = useState('3.0')
-  const [periodMode, setPeriodMode] = useState('Custom Post Month Range')
+  const [periodMode, setPeriodMode] = useState('Custom Post Month')
   const [summarizeBy, setSummarizeBy] = useState('Do Not Summarize')
   const [consolidateBy, setConsolidateBy] = useState('Do Not Consolidate')
   const [chartOfAccounts, setChartOfAccounts] = useState('Master GL Tree')
@@ -60,14 +60,17 @@ export default function ManagementFeesTrueUp() {
   const filteredRows = useMemo(() => activeRows.filter(([name]) => name.toLowerCase().includes(search.toLowerCase())), [activeRows, search])
   const visibleFeeGroups = useMemo(() => ['All Management Fees', 'Enabled', 'Disabled'].filter((group) => group.toLowerCase().includes(feeSearch.toLowerCase())), [feeSearch])
   const selectedPeriods = useMemo(() => {
-    if (periodMode === 'Current Post Month') return [endMonth === '07' ? 'Jul 2026' : 'Mar 2026'] as Period[]
-    if (periodMode === 'Quarterly') return activeImportedProperty ? ['Jul 2026'] as Period[] : periods.slice(0, 3)
+    if (periodMode !== 'Custom Post Month Range') {
+      const month = Number(startMonth)
+      const match = periodCatalog.find(({ month: catalogMonth }) => catalogMonth === month)
+      return [match?.label ?? 'Mar 2026'] as Period[]
+    }
     const start = Number(startMonth)
     const end = Number(endMonth)
     return periodCatalog.filter(({ month }) => {
       return month >= start && month <= end
     }).map(({ label }) => label)
-  }, [activeImportedProperty, periodMode, startMonth, endMonth])
+  }, [periodMode, startMonth, endMonth])
   const notify = () => { setShowToast(true); window.setTimeout(() => setShowToast(false), 2600) }
   const toggleProperty = (property: string) => setSelectedProps((current) => current.includes(property) ? current.filter((item) => item !== property) : [...current, property])
   const toggleFeeGroup = (group: string) => setSelectedFeeGroups((current) => current.includes(group) ? current.filter((item) => item !== group) : [...current, group])
@@ -102,10 +105,10 @@ export default function ManagementFeesTrueUp() {
             </div>
             <div className="filter-divider bottom-fields">
               <div><div className="field-label">Chart of Accounts or Mask <Lock size={13} /></div><select value={chartOfAccounts} onChange={(e) => setChartOfAccounts(e.target.value)}><option>Master GL Tree</option><option>AP Chart of Accounts</option></select></div>
-              <div><div className="field-label">Period <Lock size={13} /></div><select value={periodMode} onChange={(e) => setPeriodMode(e.target.value)}><option>Custom Post Month Range</option><option>Current Post Month</option><option>Quarterly</option></select><div className="date-row"><input value={startMonth} onChange={(e) => setStartMonth(e.target.value)} aria-label="start month" /><span>/</span><input value={startYear} onChange={(e) => setStartYear(e.target.value)} aria-label="start year" /><span className="date-arrow">→</span><input value={endMonth} onChange={(e) => setEndMonth(e.target.value)} aria-label="end month" /><span>/</span><input value={endYear} onChange={(e) => setEndYear(e.target.value)} aria-label="end year" /><CalendarDays size={16} /></div><div className="period-note">Max 12 post months · latest completed true-up per period.</div></div>
+              <div><div className="field-label">Period <Lock size={13} /></div><select value={periodMode} onChange={(e) => setPeriodMode(e.target.value)}><option>Current Post Month</option><option>Prior Post Month</option><option>Custom Post Month</option><option>Custom Post Month Range</option></select>{periodMode === 'Custom Post Month Range' ? <div className="date-row"><input value={startMonth} onChange={(e) => setStartMonth(e.target.value)} aria-label="start month" /><span>/</span><input value={startYear} onChange={(e) => setStartYear(e.target.value)} aria-label="start year" /><span className="date-arrow">→</span><input value={endMonth} onChange={(e) => setEndMonth(e.target.value)} aria-label="end month" /><span>/</span><input value={endYear} onChange={(e) => setEndYear(e.target.value)} aria-label="end year" /><CalendarDays size={16} /></div> : <div className="date-row single-date"><input value={startMonth} onChange={(e) => setStartMonth(e.target.value)} aria-label="post month" /><span>/</span><input value={startYear} onChange={(e) => setStartYear(e.target.value)} aria-label="post year" /><CalendarDays size={16} /></div>}<div className="period-note">{periodMode === 'Custom Post Month Range' ? 'Max 12 post months · latest completed true-up per period.' : 'One post month · latest completed true-up for the selected period.'}</div></div>
             </div>
             <div className="new-requirements"><div className="new-label">NEW</div><div><strong>Template-aware BVA labels</strong><span>{basis === 'Cash Receipts' ? 'Cash Receipts · Adjusted Cash Receipts · Percent of Cash Receipts' : 'Revenue · Adjusted Revenue · Percent of Revenue'}</span></div><div className="basis-switch"><button className={basis === 'Cash Receipts' ? 'selected' : ''} onClick={() => setBasis('Cash Receipts')}>Cash</button><button className={basis === 'Revenue' ? 'selected' : ''} onClick={() => setBasis('Revenue')}>Revenue</button></div></div>
-            <div className="panel-actions"><button className="generate-button" onClick={() => { setShowResults(true); notify() }}>Generate Report <ChevronDown size={16} /></button><button className="reset-button" onClick={() => { setVersion('3.0'); setPeriodMode('Custom Post Month Range'); setSummarizeBy('Do Not Summarize'); setConsolidateBy('Do Not Consolidate'); setChartOfAccounts('Master GL Tree'); setSelectedProps(['48 West']); setSelectedFeeGroups(['All Management Fees']); setStartMonth('01'); setStartYear('2026'); setEndMonth('03'); setEndYear('2026'); setShowResults(false) }}><RotateCcw size={14} /> Reset</button></div>
+            <div className="panel-actions"><button className="generate-button" onClick={() => { setShowResults(true); notify() }}>Generate Report <ChevronDown size={16} /></button><button className="reset-button" onClick={() => { setVersion('3.0'); setPeriodMode('Custom Post Month'); setSummarizeBy('Do Not Summarize'); setConsolidateBy('Do Not Consolidate'); setChartOfAccounts('Master GL Tree'); setSelectedProps(['48 West']); setSelectedFeeGroups(['All Management Fees']); setStartMonth('07'); setStartYear('2026'); setEndMonth('07'); setEndYear('2026'); setShowResults(false) }}><RotateCcw size={14} /> Reset</button></div>
           </section>
           <ReportPreview showResults={showResults} search={search} setSearch={setSearch} filteredRows={filteredRows} periods={selectedPeriods} basis={activeImportedProperty ? 'Revenue' : basis} properties={selectedProps} />
         </div>
