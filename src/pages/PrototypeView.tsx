@@ -1,7 +1,7 @@
 import { Suspense, lazy, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, Loader2 } from 'lucide-react'
-import { PrototypeProvider } from '@sandbox-components/prototype'
+import { PrototypeProvider } from '@/components/prototype-provider'
 import type { PrototypeEntry } from '@/lib/prototype-discovery'
 import '@/styles/sandbox-bridge.css'
 
