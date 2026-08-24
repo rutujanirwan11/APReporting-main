@@ -226,6 +226,7 @@ function sandboxResolverPlugin(): PluginOption {
 }
 
 export default defineConfig({
+  base: process.env.VITE_BASE_PATH || '/',
   plugins: [react(), tailwindcss(), sandboxResolverPlugin(), workspaceApiPlugin()],
   resolve: {
     alias: {
