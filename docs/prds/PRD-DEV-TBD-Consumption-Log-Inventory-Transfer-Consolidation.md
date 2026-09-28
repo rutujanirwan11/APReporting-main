@@ -2,6 +2,8 @@
 
 ## Jira Epic — copy/paste format
 
+**Jira Epic:** [DEV-335203 — Combine Consumption Log + Inventory Transfer Reports](https://entrata.atlassian.net/browse/DEV-335203)
+
 **Epic title:** Combine Consumption Log and Inventory Transfer reports
 
 **Epic summary:** Consolidate the Consumption Log and Inventory Transfer reports on a shared asset-transaction query foundation while preserving each report’s unique transaction fields and existing report behavior.
